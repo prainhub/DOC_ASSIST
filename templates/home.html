@@ -1,13 +1,53 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>AI Document Assistant</title>
-</head>
-<body>
+{% extends 'base.html' %}
 
-    <h1>Welcome to AI Document Assistant</h1>
+{% block title %}
+Home
+{% endblock %}
 
-    <p>Our first Django page is working! 🎉</p>
+{% block content %}
 
-</body>
-</html>
+<div class="container py-5">
+
+    <div class="row align-items-center">
+
+        <!-- Left Side -->
+        <div class="col-lg-6">
+
+            <h1 class="display-3 fw-bold">
+                📄 AI Document Assistant
+            </h1>
+
+            <p class="lead mt-4">
+                Upload PDFs, DOCX and TXT files.
+                Ask questions, generate summaries and get AI-powered suggestions instantly.
+            </p>
+
+            <div class="mt-4">
+
+                <a href="#" class="btn btn-primary btn-lg me-3">
+                    🚀 Get Started
+                </a>
+
+                <a href="#" class="btn btn-outline-dark btn-lg">
+                    📂 Upload Document
+                </a>
+
+            </div>
+
+        </div>
+
+        <!-- Right Side -->
+
+        <div class="col-lg-6 text-center">
+
+            <img src="https://placehold.co/500x400?text=AI+Assistant"
+                 class="img-fluid rounded shadow">
+
+        </div>
+
+    </div>
+
+</div>
+
+</div>
+{% endblock %}
