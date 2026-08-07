@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+
+{% block title %}Extracted Text{% endblock %}
+
+{% block content %}
+
+<div class="container mt-5">
+
+    <h2>{{ document.title }}</h2>
+
+    <hr>
+
+    <pre style="white-space: pre-wrap;">{{ text }}</pre>
+
+</div>
+
+{% endblock %}

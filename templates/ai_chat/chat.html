@@ -1,0 +1,91 @@
+{% extends "base.html" %}
+
+{% block title %}AI Chat{% endblock %}
+
+{% block content %}
+
+<div class="container mt-5">
+
+    <h2 class="mb-4">AI Document Assistant</h2>
+
+    <form method="POST">
+
+        {% csrf_token %}
+
+        <div class="mb-3">
+
+            <label class="form-label">
+                Choose Document
+            </label>
+
+            <select name="document" class="form-select" required>
+
+                <option value="">
+                    Select a document
+                </option>
+
+                {% for document in documents %}
+
+                    <option value="{{ document.id }}">
+                        {{ document.title }}
+                    </option>
+
+                {% endfor %}
+
+            </select>
+
+        </div>
+
+
+        <div class="mb-3">
+
+            <label class="form-label">
+                Ask a Question
+            </label>
+
+            <textarea
+                name="question"
+                class="form-control"
+                rows="4"
+                placeholder="Ask anything about your document..."
+                required
+            ></textarea>
+
+        </div>
+
+
+        <button type="submit" class="btn btn-primary">
+            Ask AI
+        </button>
+
+    </form>
+
+
+    {% if error %}
+
+        <div class="alert alert-danger mt-4">
+            {{ error }}
+        </div>
+
+    {% endif %}
+
+
+    {% if answer %}
+
+        <hr class="my-4">
+
+        <h4>AI Response</h4>
+
+        <div class="border rounded p-4 bg-light">
+
+            <div style="white-space: pre-wrap;">
+                {{ answer }}
+            </div>
+
+        </div>
+
+    {% endif %}
+
+</div>
+
+{% endblock %}

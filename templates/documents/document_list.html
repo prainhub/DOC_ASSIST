@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+
+{% block title %}My Documents{% endblock %}
+
+{% block content %}
+
+<div class="container mt-5">
+
+    <h2 class="mb-4">My Documents</h2>
+
+    {% if documents %}
+
+    <table class="table table-bordered">
+
+        <thead>
+            <tr>
+                <th>Title</th>
+                <th>Uploaded</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+
+        <tbody>
+
+        {% for document in documents %}
+
+            <tr>
+
+                <td>{{ document.title }}</td>
+
+                <td>{{ document.uploaded_at }}</td>
+
+                <td>
+
+                    <a href="{{ document.file.url }}"
+                       target="_blank"
+                       class="btn btn-success btn-sm">
+
+                        View
+
+                    </a>
+
+                    <a href="{% url 'extract_text' document.id %}"
+                       class="btn btn-primary btn-sm">
+
+                         Extract Text
+
+                    </a>
+
+                    <a href="{% url 'delete_document' document.id %}"
+                       class="btn btn-danger btn-sm"
+                       onclick="return confirm('Delete this document?');">
+
+                        Delete
+
+                    </a>
+
+                </td>
+
+            </tr>
+        {% endfor %}
+
+        </tbody>
+
+    </table>
+
+    {% else %}
+
+    <p>No documents uploaded yet.</p>
+
+    {% endif %}
+
+</div>
+
+{% endblock %}
