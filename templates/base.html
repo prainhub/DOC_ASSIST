@@ -29,10 +29,26 @@
 <body>
 
 <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
-    {% if user.is_authenticated %}
-    <span class="text-success">Welcome, {{ user.username }}</span>
+{% if user.is_authenticated %}
+
+    <span class="me-3">
+        Welcome, {{ user.username }}
+    </span>
+
+    <a href="{% url 'logout' %}" class="btn btn-danger">
+        Logout
+    </a>
+
 {% else %}
-    <a href="{% url 'login' %}" class="btn btn-primary">Login</a>
+
+    <a href="{% url 'login' %}" class="btn btn-primary me-2">
+        Login
+    </a>
+
+    <a href="{% url 'register' %}" class="btn btn-success">
+        Register
+    </a>
+
 {% endif %}
     <div class="container">
 
