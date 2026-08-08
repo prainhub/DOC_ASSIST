@@ -1,107 +1,68 @@
 {% extends 'base.html' %}
 
-{% block title %}
-Home
-{% endblock %}
+{% block title %}Home{% endblock %}
 
 {% block content %}
 
-<div class="container py-5">
+<div class="home-hero">
 
-    <div class="row align-items-center">
-
-        <!-- Left Side -->
-        <div class="col-lg-6">
-
-            <h1 class="display-3 fw-bold">
-                📄 AI Document Assistant
-            </h1>
-
-            <p class="lead mt-4">
-                Upload PDFs, DOCX and TXT files.
-                Ask questions, generate summaries and get AI-powered suggestions instantly.
-            </p>
-
-            <div class="mt-4">
-
-                <a href="#" class="btn btn-primary btn-lg me-3">
-                    🚀 Get Started
-                </a>
-
-                <a href="#" class="btn btn-outline-dark btn-lg">
-                    📂 Upload Document
-                </a>
-
-            </div>
-
-        </div>
-
-        <!-- Right Side -->
-
-        <div class="col-lg-6 text-center">
-
-            <img src="https://placehold.co/500x400?text=AI+Assistant"
-                 class="img-fluid rounded shadow">
-
-        </div>
-
+    <div class="chat-logo">
+        <svg width="30" height="30" viewBox="0 0 24 24" fill="none"
+             stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M2 12h4l1.5-4 3 9 3-14 2.5 9h2.5l1.5-3 1 3H22"/>
+        </svg>
     </div>
 
-</div>
-
-</div>
-<section class="container py-5">
-    <div class="text-center mb-5">
-        <h2>How It Works</h2>
-        <p class="text-muted">Get answers from your documents in four simple steps.</p>
-    </div>
-
-    <div class="row text-center">
-
-        <div class="col-md-3 mb-4">
-            <div class="card h-100 p-4">
-                <h1>📄</h1>
-                <h5>Upload</h5>
-                <p>Upload your PDF, DOCX or TXT document securely.</p>
-            </div>
-        </div>
-
-        <div class="col-md-3 mb-4">
-            <div class="card h-100 p-4">
-                <h1>🤖</h1>
-                <h5>AI Reads</h5>
-                <p>The AI processes and understands your document.</p>
-            </div>
-        </div>
-
-        <div class="col-md-3 mb-4">
-            <div class="card h-100 p-4">
-                <h1>💬</h1>
-                <h5>Ask Questions</h5>
-                <p>Ask anything related to the uploaded content.</p>
-            </div>
-        </div>
-
-        <div class="col-md-3 mb-4">
-            <div class="card h-100 p-4">
-                <h1>✨</h1>
-                <h5>Get Answers</h5>
-                <p>Receive accurate answers, summaries and suggestions.</p>
-            </div>
-        </div>
-
-    </div>
-</section>
-<footer class="bg-dark text-white py-4 mt-5">
-    <div class="container text-center">
-        <h5>AI Document Assistant</h5>
-        <p class="mb-1">
-            Upload documents, ask questions, and get AI-powered insights.
+    <div class="home-hero-text">
+        <h1>Where should we begin?</h1>
+        <p class="text-secondary">
+            Sign in to ask questions about your fitness and nutrition documents.
         </p>
-
-        <small>
-            © 2026 AI Document Assistant | Built with Django, Bootstrap & AI
-        </small>
     </div>
-</footer>
+
+    <form method="POST" action="{% url 'chat_home' %}" class="home-composer">
+
+        {% csrf_token %}
+
+        <div class="chat-input-row">
+
+            <a href="{% url 'upload_document' %}" class="attach-btn" title="Upload a document">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
+                     stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="12" y1="5" x2="12" y2="19"/>
+                    <line x1="5" y1="12" x2="19" y2="12"/>
+                </svg>
+            </a>
+
+            <textarea
+                name="question"
+                class="form-control chat-textarea"
+                rows="1"
+                placeholder="Ask anything about your documents..."
+                required
+            ></textarea>
+
+            <button type="submit" class="chat-send-btn">
+                <span class="ai-pulse-dot"></span>
+                Ask
+            </button>
+
+        </div>
+
+    </form>
+
+    <div class="home-cta-row">
+
+        <a href="{% url 'register' %}" class="btn-cta-primary">
+            Create free account
+        </a>
+
+        <a href="{% url 'login' %}" class="btn-cta-ghost">
+            Log in
+        </a>
+
+    </div>
+
+</div>
+
 {% endblock %}

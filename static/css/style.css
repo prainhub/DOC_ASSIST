@@ -1,27 +1,29 @@
 /* =====================================================
    FITGPT GLOBAL DESIGN
    Identity: an AI that reads your fitness/nutrition docs.
-   Signature: a heart-rate pulse trace, reused as the logo
-   mark and as the "AI is alive/thinking" indicator.
+   Dark ink base, volt-lime accent, persistent left rail.
    ===================================================== */
 
 :root {
 
-    /* Core palette */
-    --ink: #12161d;
-    --paper: #f6f4ee;
-    --surface: #ffffff;
+    /* Core palette (dark theme) */
+    --bg: #0e1116;
+    --surface: #1a1e26;
+    --surface-hover: #232834;
+
+    --ink: #0e1116;
+    --paper: #0e1116;
 
     --volt: #c6ff3d;
-    --volt-dim: #eef7cf;
-    --volt-ink: #1c2b06;
+    --volt-dim: rgba(198, 255, 61, 0.14);
+    --volt-ink: #c6ff3d;
 
-    --text: #12161d;
-    --text-secondary: #5c6570;
+    --text: #ececf1;
+    --text-secondary: #9aa0ab;
 
-    --border: #e4e0d5;
+    --border: #262b35;
 
-    --danger: #e2452c;
+    --danger: #ff6b57;
 
     --radius: 14px;
     --radius-sm: 9px;
@@ -49,7 +51,7 @@ html {
 
 body {
     font-family: var(--font-body);
-    background: var(--paper);
+    background: var(--bg);
     color: var(--text);
     min-height: 100vh;
 }
@@ -64,66 +66,62 @@ body {
 
 
 /* =====================================================
-   NAVBAR
+   APP SHELL — sidebar + main area
    ===================================================== */
 
-.main-navbar {
-    width: 100%;
-    height: 72px;
-    background: rgba(246, 244, 238, 0.88);
-    border-bottom: 1px solid var(--border);
-    position: sticky;
-    top: 0;
-    z-index: 1000;
-    backdrop-filter: blur(12px);
+.app-shell-wrapper {
+    display: flex;
+    min-height: 100vh;
 }
 
-.navbar-container {
-    max-width: 1280px;
-    height: 100%;
-    margin: auto;
-    padding: 0 28px;
+.app-main {
+    flex: 1;
+    min-width: 0;
+    min-height: 100vh;
     display: flex;
-    align-items: center;
-    justify-content: space-between;
+    flex-direction: column;
 }
 
 
 /* =====================================================
-   BRAND
+   GLOBAL SIDEBAR
    ===================================================== */
 
-.brand {
+.global-sidebar {
+    width: 260px;
+    flex-shrink: 0;
+    background: var(--bg);
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding: 16px 12px;
+    min-height: 100vh;
+}
+
+.gs-brand {
     display: flex;
     align-items: center;
-    gap: 11px;
+    gap: 10px;
     text-decoration: none;
-    color: var(--ink);
+    color: var(--text);
     font-family: var(--font-display);
-    font-size: 20px;
+    font-size: 17px;
     font-weight: 700;
-    letter-spacing: -0.4px;
+    padding: 8px 8px 16px;
 }
 
-.brand:hover .brand-icon {
-    background: var(--ink);
-}
-
-.brand-icon {
-    width: 36px;
-    height: 36px;
-    border-radius: 10px;
+.gs-brand-icon {
+    width: 30px;
+    height: 30px;
+    border-radius: 8px;
     display: flex;
     align-items: center;
     justify-content: center;
-    background: var(--ink);
-    color: var(--volt);
+    background: var(--volt);
+    color: var(--ink);
     flex-shrink: 0;
     animation: heartbeat 2.4s ease-in-out infinite;
-}
-
-.pulse-trace {
-    display: block;
 }
 
 @keyframes heartbeat {
@@ -134,51 +132,162 @@ body {
     70%      { transform: scale(1); }
 }
 
-
-/* =====================================================
-   NAVIGATION
-   ===================================================== */
-
-.nav-links {
+.gs-new-chat,
+.gs-link {
     display: flex;
     align-items: center;
-    gap: 6px;
-}
-
-.nav-link-custom {
-    position: relative;
+    gap: 10px;
     text-decoration: none;
-    color: var(--text-secondary);
+    color: var(--text);
     font-size: 14px;
     font-weight: 500;
-    padding: 9px 12px;
+    padding: 10px 10px;
     border-radius: var(--radius-sm);
-    transition: color 0.2s ease, background 0.2s ease;
+    transition: background 0.15s ease;
 }
 
-.nav-link-custom:hover {
-    color: var(--ink);
+.gs-new-chat {
+    background: var(--surface);
+    margin-bottom: 4px;
+}
+
+.gs-new-chat:hover,
+.gs-link:hover {
+    background: var(--surface-hover);
+}
+
+.gs-section-label {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--text-secondary);
+    padding: 16px 10px 4px;
+}
+
+.gs-session-list {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    overflow-y: auto;
+    flex: 1;
+}
+
+.gs-session-item {
+    display: block;
+    text-decoration: none;
+    color: var(--text-secondary);
+    font-size: 13.5px;
+    padding: 8px 10px;
+    border-radius: var(--radius-sm);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    transition: background 0.15s ease, color 0.15s ease;
+}
+
+.gs-session-item:hover {
+    background: var(--surface-hover);
+    color: var(--text);
+}
+
+.gs-session-item.active {
+    background: var(--volt-dim);
+    color: var(--volt);
+}
+
+.gs-empty {
+    font-size: 12.5px;
+    color: var(--text-secondary);
+    padding: 8px 10px;
+}
+
+.gs-bottom {
+    margin-top: auto;
+    padding-top: 12px;
+    border-top: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.gs-user {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    padding: 6px 8px;
+}
+
+.gs-avatar {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    background: var(--volt-dim);
+    color: var(--volt);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--font-mono);
+    font-size: 12px;
+    font-weight: 700;
+    flex-shrink: 0;
+}
+
+.gs-username {
+    font-family: var(--font-mono);
+    font-size: 13px;
+    color: var(--text);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.gs-logout {
+    text-decoration: none;
+    color: var(--text-secondary);
+    font-size: 13px;
+    padding: 8px;
+    border-radius: var(--radius-sm);
+    transition: color 0.15s ease;
+}
+
+.gs-logout:hover {
+    color: var(--danger);
+}
+
+.gs-login,
+.gs-signup {
+    text-decoration: none;
+    text-align: center;
+    font-size: 14px;
+    font-weight: 600;
+    padding: 10px;
+    border-radius: var(--radius-sm);
+    transition: background 0.15s ease;
+}
+
+.gs-login {
+    color: var(--text);
     background: var(--surface);
 }
 
+.gs-login:hover {
+    background: var(--surface-hover);
+}
+
+.gs-signup {
+    background: var(--volt);
+    color: var(--ink);
+}
+
+.gs-signup:hover {
+    background: #d7ff6e;
+}
+
 
 /* =====================================================
-   AI BUTTON
+   AI PULSE DOT (used inside send buttons)
    ===================================================== */
-
-.ai-nav-link {
-    display: inline-flex;
-    align-items: center;
-    gap: 7px;
-    color: var(--ink);
-    font-weight: 600;
-    background: var(--volt-dim);
-}
-
-.ai-nav-link:hover {
-    background: var(--volt);
-    color: var(--volt-ink);
-}
 
 .ai-pulse-dot {
     width: 7px;
@@ -189,100 +298,9 @@ body {
     animation: pulse-dot 1.8s ease-in-out infinite;
 }
 
-.ai-nav-link:hover .ai-pulse-dot {
-    background: var(--volt-ink);
-}
-
 @keyframes pulse-dot {
     0%, 100% { opacity: 1; transform: scale(1); }
     50%      { opacity: 0.35; transform: scale(0.7); }
-}
-
-
-/* =====================================================
-   USER
-   ===================================================== */
-
-.user-menu {
-    display: flex;
-    align-items: center;
-    gap: 9px;
-    margin-left: 10px;
-    padding-left: 16px;
-    border-left: 1px solid var(--border);
-}
-
-.user-avatar {
-    width: 34px;
-    height: 34px;
-    border-radius: 50%;
-    background: var(--volt-dim);
-    color: var(--volt-ink);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-family: var(--font-mono);
-    font-size: 13px;
-    font-weight: 700;
-}
-
-.username {
-    font-family: var(--font-mono);
-    font-size: 13px;
-    font-weight: 500;
-    color: var(--text);
-}
-
-
-/* =====================================================
-   LOGOUT
-   ===================================================== */
-
-.logout-link {
-    text-decoration: none;
-    color: var(--text-secondary);
-    font-size: 14px;
-    font-weight: 500;
-    margin-left: 8px;
-    padding: 6px 8px;
-    border-radius: var(--radius-sm);
-    transition: color 0.2s ease;
-}
-
-.logout-link:hover {
-    color: var(--danger);
-}
-
-
-/* =====================================================
-   SIGN UP
-   ===================================================== */
-
-.signup-button {
-    text-decoration: none;
-    background: var(--ink);
-    color: var(--volt);
-    font-size: 14px;
-    font-weight: 600;
-    padding: 10px 18px;
-    border-radius: var(--radius-sm);
-    transition: transform 0.2s ease, background 0.2s ease;
-}
-
-.signup-button:hover {
-    background: #232a35;
-    color: var(--volt);
-    transform: translateY(-1px);
-}
-
-
-/* =====================================================
-   MAIN CONTENT
-   ===================================================== */
-
-.main-content {
-    width: 100%;
-    min-height: calc(100vh - 72px);
 }
 
 
@@ -291,30 +309,84 @@ body {
    ===================================================== */
 
 .btn-primary {
-    background: var(--ink);
+    background: var(--volt);
     border: none;
     border-radius: var(--radius-sm);
-    color: var(--volt);
+    color: var(--ink);
     font-weight: 600;
     padding: 10px 18px;
     transition: background 0.2s ease;
 }
 
 .btn-primary:hover {
-    background: #232a35;
-    color: var(--volt);
+    background: #d7ff6e;
+    color: var(--ink);
 }
 
-.btn-outline-primary {
-    border: 1px solid var(--ink);
-    color: var(--ink);
+.btn-outline-primary,
+.btn-outline-dark {
+    border: 1px solid var(--border);
+    color: var(--text);
     border-radius: var(--radius-sm);
     font-weight: 600;
+    background: transparent;
 }
 
-.btn-outline-primary:hover {
-    background: var(--ink);
-    color: var(--volt);
+.btn-outline-primary:hover,
+.btn-outline-dark:hover {
+    background: var(--surface-hover);
+    color: var(--text);
+    border-color: var(--border);
+}
+
+.btn-success {
+    background: var(--volt);
+    border: none;
+    color: var(--ink);
+    font-weight: 600;
+    border-radius: var(--radius-sm);
+}
+
+.btn-success:hover {
+    background: #d7ff6e;
+    color: var(--ink);
+}
+
+.btn-cta-primary {
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--volt);
+    color: var(--ink);
+    font-weight: 600;
+    font-size: 15px;
+    padding: 11px 22px;
+    border-radius: var(--radius-sm);
+    transition: background 0.2s ease;
+}
+
+.btn-cta-primary:hover {
+    background: #d7ff6e;
+}
+
+.btn-cta-ghost {
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--text);
+    font-weight: 600;
+    font-size: 15px;
+    padding: 11px 22px;
+    border-radius: var(--radius-sm);
+    transition: background 0.2s ease;
+}
+
+.btn-cta-ghost:hover {
+    background: var(--surface-hover);
 }
 
 
@@ -326,7 +398,7 @@ body {
     border: 1px solid var(--border);
     border-radius: var(--radius);
     background: var(--surface);
-    box-shadow: 0 8px 30px rgba(18, 22, 29, 0.06);
+    color: var(--text);
 }
 
 
@@ -343,10 +415,283 @@ body {
     color: var(--text);
 }
 
+.form-control::placeholder {
+    color: var(--text-secondary);
+}
+
 .form-control:focus,
 .form-select:focus {
-    border-color: var(--ink);
-    box-shadow: 0 0 0 3px rgba(198, 255, 61, 0.35);
+    background: var(--surface);
+    color: var(--text);
+    border-color: var(--volt);
+    box-shadow: 0 0 0 3px rgba(198, 255, 61, 0.2);
+}
+
+.form-label {
+    color: var(--text-secondary);
+    font-size: 14px;
+    font-weight: 500;
+    margin-bottom: 6px;
+    display: inline-block;
+}
+
+.form-select option {
+    background: var(--surface);
+    color: var(--text);
+}
+
+
+/* =====================================================
+   TABLES
+   ===================================================== */
+
+.table {
+    color: var(--text);
+}
+
+.table > :not(caption) > * > * {
+    background-color: var(--surface);
+    border-color: var(--border);
+    color: var(--text);
+}
+
+
+/* =====================================================
+   TEXT HELPERS
+   ===================================================== */
+
+.text-secondary,
+.text-muted {
+    color: var(--text-secondary) !important;
+}
+
+
+/* =====================================================
+   PUBLIC HOME — greeting + composer
+   ===================================================== */
+
+.home-hero {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 22px;
+    padding: 32px 24px;
+    text-align: center;
+    min-height: 100vh;
+}
+
+.home-hero-text h1 {
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 32px;
+    margin-bottom: 6px;
+    color: var(--text);
+}
+
+.home-composer {
+    width: 100%;
+    max-width: 640px;
+}
+
+.attach-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--text-secondary);
+    text-decoration: none;
+    flex-shrink: 0;
+    transition: background 0.2s ease, color 0.2s ease;
+}
+
+.attach-btn:hover {
+    background: var(--surface-hover);
+    color: var(--text);
+}
+
+.home-cta-row {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
+
+/* =====================================================
+   AI CHAT — center column
+   ===================================================== */
+
+.chat-main {
+    display: flex;
+    flex-direction: column;
+    max-width: 760px;
+    width: 100%;
+    margin: 0 auto;
+    padding: 32px 24px 24px;
+    min-height: 100vh;
+    flex: 1;
+}
+
+.chat-center-intro {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    gap: 6px;
+}
+
+.chat-logo {
+    width: 52px;
+    height: 52px;
+    border-radius: 14px;
+    background: var(--volt);
+    color: var(--ink);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 10px;
+    animation: heartbeat 2.4s ease-in-out infinite;
+}
+
+.chat-center-intro h2 {
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 26px;
+    color: var(--text);
+}
+
+/* ---------- Thread ---------- */
+
+.chat-thread {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+    padding-bottom: 24px;
+}
+
+.chat-msg {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.chat-msg-role {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--text-secondary);
+}
+
+.chat-msg-bubble {
+    border-radius: var(--radius);
+    padding: 14px 16px;
+    font-size: 15px;
+    line-height: 1.55;
+}
+
+.chat-msg-user .chat-msg-bubble {
+    background: var(--volt-dim);
+    color: var(--text);
+    align-self: flex-end;
+    max-width: 85%;
+}
+
+.chat-msg-user {
+    align-items: flex-end;
+}
+
+.chat-msg-assistant .chat-msg-bubble {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    color: var(--text);
+}
+
+.chat-error {
+    margin-bottom: 14px;
+}
+
+/* ---------- Composer ---------- */
+
+.chat-composer {
+    position: sticky;
+    bottom: 0;
+    background: var(--bg);
+    padding-top: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.chat-doc-select {
+    max-width: 320px;
+}
+
+.chat-doc-pill {
+    font-size: 13px;
+    color: var(--text-secondary);
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 8px 12px;
+    align-self: flex-start;
+}
+
+.chat-input-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 28px;
+    padding: 8px 8px 8px 16px;
+}
+
+.chat-textarea {
+    border: none;
+    resize: none;
+    flex: 1;
+    box-shadow: none !important;
+    background: transparent;
+    padding: 8px 0;
+    max-height: 160px;
+}
+
+.chat-textarea:focus {
+    outline: none;
+    box-shadow: none !important;
+    border: none;
+}
+
+.chat-send-btn {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    border: none;
+    background: var(--volt);
+    color: var(--ink);
+    font-weight: 600;
+    font-size: 14px;
+    padding: 10px 18px;
+    border-radius: 20px;
+    transition: background 0.2s ease;
+}
+
+.chat-send-btn:hover {
+    background: #d7ff6e;
+}
+
+.chat-send-btn .ai-pulse-dot {
+    background: var(--ink);
 }
 
 
@@ -354,38 +699,27 @@ body {
    RESPONSIVE
    ===================================================== */
 
-@media (max-width: 900px) {
-    .nav-links {
-        gap: 3px;
+@media (max-width: 860px) {
+    .app-shell-wrapper {
+        flex-direction: column;
     }
 
-    .nav-link-custom {
-        padding: 8px;
+    .global-sidebar {
+        width: 100%;
+        min-height: auto;
+        flex-direction: row;
+        flex-wrap: wrap;
+        border-right: none;
+        border-bottom: 1px solid var(--border);
     }
 
-    .username {
+    .gs-session-list {
         display: none;
     }
-}
 
-@media (max-width: 700px) {
-    .main-navbar {
-        height: auto;
-    }
-
-    .navbar-container {
-        padding: 14px 18px;
-        flex-direction: column;
-        gap: 15px;
-    }
-
-    .nav-links {
-        flex-wrap: wrap;
-        justify-content: center;
-    }
-
-    .user-menu {
-        border-left: none;
-        padding-left: 0;
+    .gs-bottom {
+        margin-top: 0;
+        border-top: none;
+        flex-direction: row;
     }
 }

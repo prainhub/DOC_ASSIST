@@ -4,87 +4,98 @@
 
 {% block content %}
 
-<div class="container mt-5">
+<div class="chat-main">
 
-    <h2 class="mb-4">AI Document Assistant</h2>
+    {% if not active_session %}
 
-    <form method="POST">
+        <div class="chat-center-intro">
 
-        {% csrf_token %}
+            <div class="chat-logo">
+                <svg width="30" height="30" viewBox="0 0 24 24" fill="none"
+                     stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M2 12h4l1.5-4 3 9 3-14 2.5 9h2.5l1.5-3 1 3H22"/>
+                </svg>
+            </div>
 
-        <div class="mb-3">
-
-            <label class="form-label">
-                Choose Document
-            </label>
-
-            <select name="document" class="form-select" required>
-
-                <option value="">
-                    Select a document
-                </option>
-
-                {% for document in documents %}
-
-                    <option value="{{ document.id }}">
-                        {{ document.title }}
-                    </option>
-
-                {% endfor %}
-
-            </select>
+            <h2>Ask FITGPT about your documents</h2>
+            <p class="text-secondary">Pick a document and ask your first question to start a chat.</p>
 
         </div>
 
+    {% else %}
 
-        <div class="mb-3">
+        <div class="chat-thread">
 
-            <label class="form-label">
-                Ask a Question
-            </label>
+            {% for m in messages %}
 
-            <textarea
-                name="question"
-                class="form-control"
-                rows="4"
-                placeholder="Ask anything about your document..."
-                required
-            ></textarea>
+                <div class="chat-msg chat-msg-{{ m.role }}">
+
+                    <div class="chat-msg-role">
+                        {% if m.role == "user" %}You{% else %}FITGPT{% endif %}
+                    </div>
+
+                    <div class="chat-msg-bubble" style="white-space: pre-wrap;">{{ m.content }}</div>
+
+                </div>
+
+            {% endfor %}
 
         </div>
 
-
-        <button type="submit" class="btn btn-primary">
-            Ask AI
-        </button>
-
-    </form>
-
+    {% endif %}
 
     {% if error %}
 
-        <div class="alert alert-danger mt-4">
+        <div class="alert alert-danger chat-error">
             {{ error }}
         </div>
 
     {% endif %}
 
+    <!-- ================= COMPOSER ================= -->
 
-    {% if answer %}
+    <form method="POST" class="chat-composer">
 
-        <hr class="my-4">
+        {% csrf_token %}
 
-        <h4>AI Response</h4>
+        {% if not active_session %}
 
-        <div class="border rounded p-4 bg-light">
+            <select name="document" class="form-select chat-doc-select" required>
 
-            <div style="white-space: pre-wrap;">
-                {{ answer }}
+                <option value="">Select a document</option>
+
+                {% for document in documents %}
+                    <option value="{{ document.id }}">{{ document.title }}</option>
+                {% endfor %}
+
+            </select>
+
+        {% else %}
+
+            <div class="chat-doc-pill">
+                Chatting about: <strong>{{ active_session.document.title }}</strong>
             </div>
+
+        {% endif %}
+
+        <div class="chat-input-row">
+
+            <textarea
+                name="question"
+                class="form-control chat-textarea"
+                rows="1"
+                placeholder="Ask anything about your document..."
+                required
+            ></textarea>
+
+            <button type="submit" class="chat-send-btn">
+                <span class="ai-pulse-dot"></span>
+                Ask
+            </button>
 
         </div>
 
-    {% endif %}
+    </form>
 
 </div>
 

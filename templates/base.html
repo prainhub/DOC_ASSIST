@@ -37,18 +37,16 @@
 
 <body>
 
-<!-- ================= NAVBAR ================= -->
+<div class="app-shell-wrapper">
 
-<nav class="main-navbar">
+    <!-- ================= GLOBAL SIDEBAR ================= -->
 
-    <div class="navbar-container">
+    <aside class="global-sidebar">
 
-        <!-- Logo -->
+        <a href="/" class="gs-brand">
 
-        <a href="/" class="brand">
-
-            <span class="brand-icon">
-                <svg class="pulse-trace" width="18" height="18" viewBox="0 0 24 24" fill="none"
+            <span class="gs-brand-icon">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
                      stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <path d="M2 12h4l1.5-4 3 9 3-14 2.5 9h2.5l1.5-3 1 3H22"/>
                 </svg>
@@ -59,103 +57,106 @@
         </a>
 
 
-        <!-- Navigation -->
+        <a href="{% url 'chat_home' %}" class="gs-new-chat">
 
-        <div class="nav-links">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
+                 stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="12" y1="5" x2="12" y2="19"/>
+                <line x1="5" y1="12" x2="19" y2="12"/>
+            </svg>
 
-            <a href="/" class="nav-link-custom">
-                Home
-            </a>
+            New chat
 
+        </a>
+
+
+        <a href="{% url 'document_list' %}" class="gs-link">
+
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
+                 stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                <polyline points="14 2 14 8 20 8"/>
+            </svg>
+
+            My Documents
+
+        </a>
+
+
+        {% if user.is_authenticated %}
+
+            <div class="gs-section-label">Recents</div>
+
+            <div class="gs-session-list">
+
+                {% for s in global_sessions %}
+
+                    <a href="{% url 'chat_session' s.id %}"
+                       class="gs-session-item {% if active_session and active_session.id == s.id %}active{% endif %}">
+
+                        {{ s.title|default:"Untitled chat"|truncatechars:28 }}
+
+                    </a>
+
+                {% empty %}
+
+                    <p class="gs-empty">No chats yet.</p>
+
+                {% endfor %}
+
+            </div>
+
+        {% endif %}
+
+
+        <div class="gs-bottom">
 
             {% if user.is_authenticated %}
 
-                <a href="{% url 'document_list' %}"
-                   class="nav-link-custom">
+                <div class="gs-user">
 
-                    My Documents
-
-                </a>
-
-
-                <a href="{% url 'upload_document' %}"
-                   class="nav-link-custom">
-
-                    Upload
-
-                </a>
-
-
-                <a href="{% url 'chat_home' %}"
-                   class="nav-link-custom ai-nav-link">
-
-                    <span class="ai-pulse-dot"></span>
-                    Ask AI
-
-                </a>
-
-
-                <!-- User -->
-
-                <div class="user-menu">
-
-                    <div class="user-avatar">
-
+                    <div class="gs-avatar">
                         {{ user.username|first|upper }}
-
                     </div>
 
-                    <span class="username">
-
+                    <span class="gs-username">
                         {{ user.username }}
-
                     </span>
 
                 </div>
 
-
-                <a href="{% url 'logout' %}"
-                   class="logout-link">
-
+                <a href="{% url 'logout' %}" class="gs-logout">
                     Logout
-
                 </a>
 
             {% else %}
 
-                <a href="{% url 'login' %}"
-                   class="nav-link-custom">
-
-                    Login
-
+                <a href="{% url 'login' %}" class="gs-login">
+                    Log in
                 </a>
 
-
-                <a href="{% url 'register' %}"
-                   class="signup-button">
-
+                <a href="{% url 'register' %}" class="gs-signup">
                     Get Started
-
                 </a>
 
             {% endif %}
 
         </div>
 
-    </div>
-
-</nav>
+    </aside>
 
 
-<!-- ================= MAIN CONTENT ================= -->
+    <!-- ================= MAIN AREA ================= -->
 
-<main class="main-content">
+    <main class="app-main">
 
-    {% block content %}
+        {% block content %}
 
-    {% endblock %}
+        {% endblock %}
 
-</main>
+    </main>
+
+</div>
 
 
 <!-- Bootstrap JS -->
