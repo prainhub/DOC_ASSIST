@@ -1,4 +1,8 @@
-from django.shortcuts import render
+from django.shortcuts import render, redirect
+
 
 def home(request):
-    return render(request,'home.html')
+    if request.user.is_authenticated:
+        return redirect("chat_home")
+
+    return render(request, "home.html")

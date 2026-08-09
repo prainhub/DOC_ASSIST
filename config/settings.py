@@ -14,6 +14,8 @@ from pathlib import Path
 from dotenv import load_dotenv
 import os
 
+# Load .env FIRST so os.getenv() picks up the values
+load_dotenv()
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -136,4 +138,4 @@ MEDIA_ROOT = BASE_DIR /"media"
 
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 
-load_dotenv()
+LOGIN_URL = 'login'

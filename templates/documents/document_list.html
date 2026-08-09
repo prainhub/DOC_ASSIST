@@ -1,75 +1,154 @@
 {% extends "base.html" %}
 
-{% block title %}My Documents{% endblock %}
+{% block title %}My Documents — DOCASSIST{% endblock %}
 
 {% block content %}
 
-<div class="container mt-5">
+<div class="docs-page">
 
-    <h2 class="mb-4">My Documents</h2>
+    <div class="docs-header">
+        <h1>My Documents</h1>
+        <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
+            <input type="search" class="docs-search" id="docsSearch"
+                   placeholder="Search documents..." oninput="filterDocs(this.value)">
+            <a href="{% url 'upload_document' %}" class="docs-upload-btn">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none"
+                     stroke="currentColor" stroke-width="2.5"
+                     stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="12" y1="5" x2="12" y2="19"/>
+                    <line x1="5" y1="12" x2="19" y2="12"/>
+                </svg>
+                Upload
+            </a>
+        </div>
+    </div>
+
 
     {% if documents %}
 
-    <table class="table table-bordered">
+        <div class="docs-grid" id="docsGrid">
 
-        <thead>
-            <tr>
-                <th>Title</th>
-                <th>Uploaded</th>
-                <th>Actions</th>
-            </tr>
-        </thead>
+            {% for doc in documents %}
 
-        <tbody>
+                <div class="doc-card"
+                     data-title="{{ doc.title|lower }}"
+                     data-ext="{{ doc.file_extension }}">
 
-        {% for document in documents %}
+                    <div class="doc-card-top">
 
-            <tr>
+                        <div class="doc-icon">
+                            {% if doc.file_extension == 'pdf' %}📄
+                            {% elif doc.file_extension == 'docx' %}📝
+                            {% elif doc.file_extension == 'txt' %}📃
+                            {% else %}📁{% endif %}
+                        </div>
 
-                <td>{{ document.title }}</td>
+                        <div class="doc-info">
+                            <div class="doc-title" title="{{ doc.title }}">{{ doc.title }}</div>
+                            <div class="doc-meta">
+                                <span class="doc-badge">{{ doc.file_extension|upper }}</span>
+                                &nbsp;·&nbsp;
+                                {{ doc.uploaded_at|timesince }} ago
+                            </div>
+                        </div>
 
-                <td>{{ document.uploaded_at }}</td>
+                    </div>
 
-                <td>
+                    <!-- Processing status -->
+                    <div class="doc-status {{ doc.processing_status }}">
+                        {% if doc.processing_status == 'ready' %}
+                            ✓ Text extracted
+                        {% elif doc.processing_status == 'processing' %}
+                            <span class="spinner"></span> Extracting text...
+                        {% elif doc.processing_status == 'failed' %}
+                            ✕ Extraction failed
+                        {% else %}
+                            ○ Pending extraction
+                        {% endif %}
+                    </div>
 
-                    <a href="{{ document.file.url }}"
-                       target="_blank"
-                       class="btn btn-success btn-sm">
+                    <!-- Actions -->
+                    <div class="doc-actions">
 
-                        View
+                        <a href="{{ doc.file.url }}" target="_blank" class="doc-btn">
+                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none"
+                                 stroke="currentColor" stroke-width="2"
+                                 stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
+                                <polyline points="15 3 21 3 21 9"/>
+                                <line x1="10" y1="14" x2="21" y2="3"/>
+                            </svg>
+                            View
+                        </a>
 
-                    </a>
+                        <a href="{% url 'chat_with_document' doc.id %}" class="doc-btn primary">
+                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none"
+                                 stroke="currentColor" stroke-width="2"
+                                 stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+                            </svg>
+                            Chat
+                        </a>
 
-                    <a href="{% url 'extract_text' document.id %}"
-                       class="btn btn-primary btn-sm">
+                        {% if doc.processing_status != 'ready' %}
+                        <a href="{% url 'extract_text' doc.id %}" class="doc-btn">
+                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none"
+                                 stroke="currentColor" stroke-width="2"
+                                 stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                                <polyline points="7 10 12 15 17 10"/>
+                                <line x1="12" y1="15" x2="12" y2="3"/>
+                            </svg>
+                            Extract
+                        </a>
+                        {% endif %}
 
-                         Extract Text
+                        <a href="{% url 'delete_document' doc.id %}"
+                           class="doc-btn danger"
+                           onclick="return confirm('Delete {{ doc.title|escapejs }}? This cannot be undone.')">
+                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none"
+                                 stroke="currentColor" stroke-width="2"
+                                 stroke-linecap="round" stroke-linejoin="round">
+                                <polyline points="3 6 5 6 21 6"/>
+                                <path d="M19 6l-1 14H6L5 6"/>
+                                <path d="M10 11v6M14 11v6"/>
+                                <path d="M9 6V4h6v2"/>
+                            </svg>
+                            Delete
+                        </a>
 
-                    </a>
+                    </div>
 
-                    <a href="{% url 'delete_document' document.id %}"
-                       class="btn btn-danger btn-sm"
-                       onclick="return confirm('Delete this document?');">
+                </div>
 
-                        Delete
+            {% endfor %}
 
-                    </a>
-
-                </td>
-
-            </tr>
-        {% endfor %}
-
-        </tbody>
-
-    </table>
+        </div>
 
     {% else %}
 
-    <p>No documents uploaded yet.</p>
+        <div class="docs-empty">
+            <div style="font-size:48px; margin-bottom:16px;">📁</div>
+            <p>No documents uploaded yet.</p>
+            <a href="{% url 'upload_document' %}" class="docs-upload-btn">Upload your first document</a>
+        </div>
 
     {% endif %}
 
 </div>
 
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function filterDocs(query) {
+    const q = query.toLowerCase().trim();
+    const cards = document.querySelectorAll('.doc-card');
+    cards.forEach(card => {
+        const title = card.dataset.title || '';
+        const ext   = card.dataset.ext   || '';
+        card.style.display = (title.includes(q) || ext.includes(q)) ? '' : 'none';
+    });
+}
+</script>
 {% endblock %}

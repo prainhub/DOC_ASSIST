@@ -1,16 +1,43 @@
 {% extends "base.html" %}
 
-{% block title %}Extracted Text{% endblock %}
+{% block title %}Extracted Text — {{ document.title }} — DOCASSIST{% endblock %}
 
 {% block content %}
 
-<div class="container mt-5">
+<div class="docs-page">
 
-    <h2>{{ document.title }}</h2>
+    <div class="docs-header">
+        <h1>{{ document.title }}</h1>
+        <div style="display:flex; gap:10px;">
+            <a href="{% url 'chat_with_document' document.id %}" class="docs-upload-btn">
+                💬 Chat with this document
+            </a>
+            <a href="{% url 'document_list' %}"
+               style="display:inline-flex; align-items:center; padding:9px 18px;
+                      border:1px solid var(--border); border-radius:var(--radius-sm);
+                      color:var(--text-sec); font-size:13.5px; transition:background 0.15s;"
+               onmouseover="this.style.background='var(--surface-hover)'"
+               onmouseout="this.style.background='transparent'">
+                ← My Documents
+            </a>
+        </div>
+    </div>
 
-    <hr>
+    {% if error %}
+        <div class="chat-error" style="max-width:none; margin-bottom:20px;">
+            ✕ Extraction failed: {{ error }}
+        </div>
+    {% endif %}
 
-    <pre style="white-space: pre-wrap;">{{ text }}</pre>
+    {% if text %}
+        <div style="background:var(--surface); border:1px solid var(--border);
+                    border-radius:var(--radius); padding:24px;
+                    white-space:pre-wrap; font-family:var(--font-mono);
+                    font-size:13px; line-height:1.7; color:var(--text-sec);
+                    max-height:70vh; overflow-y:auto;">{{ text }}</div>
+    {% else %}
+        <p style="color:var(--text-sec);">No text could be extracted from this document.</p>
+    {% endif %}
 
 </div>
 

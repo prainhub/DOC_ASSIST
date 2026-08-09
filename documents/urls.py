@@ -6,4 +6,5 @@ urlpatterns = [
     path("upload/", views.upload_document, name="upload_document"),
     path("delete/<int:document_id>/", views.delete_document, name="delete_document"),
     path("extract/<int:document_id>/", views.extract_text, name='extract_text'),
+    path("chat/<int:document_id>/", views.chat_with_document, name='chat_with_document'),
 ]

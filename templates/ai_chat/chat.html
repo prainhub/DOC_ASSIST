@@ -1,97 +1,278 @@
 {% extends "base.html" %}
 
-{% block title %}AI Chat{% endblock %}
+{% block title %}{% if active_session %}{{ active_session.title|truncatechars:40 }} — {% endif %}FITGPT{% endblock %}
 
 {% block content %}
 
-<div class="chat-main">
+<!-- =====================================================
+     CHAT HEADER
+===================================================== -->
 
-    {% if not active_session %}
+<header class="chat-header">
 
-        <div class="chat-center-intro">
+    <div class="chat-header-info">
+        <div class="chat-logo">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none"
+                 stroke="currentColor" stroke-width="2.5"
+                 stroke-linecap="round" stroke-linejoin="round">
+                <path d="M2 12h4l1.5-4 3 9 3-14 2.5 9h2.5l1.5-3 1 3H22"/>
+            </svg>
+        </div>
+        <div>
+            <h1>FITGPT</h1>
+            {% if active_session %}
+                {% if active_session.mode == "document" %}
+                    <span class="chat-status">📄 Document AI</span>
+                {% else %}
+                    <span class="chat-status">✦ General AI</span>
+                {% endif %}
+            {% else %}
+                <span class="chat-status">✦ AI Assistant</span>
+            {% endif %}
+        </div>
+    </div>
 
-            <div class="chat-logo">
+    {% if active_session and active_session.document %}
+        <div class="active-document">
+            📄 {{ active_session.document.title|truncatechars:35 }}
+        </div>
+    {% endif %}
+
+</header>
+
+
+<!-- =====================================================
+     MESSAGES
+===================================================== -->
+
+<section class="chat-messages" id="chatMessages">
+
+    {% if active_session and messages %}
+
+        {% for message in messages %}
+
+            {% if message.role == "user" %}
+                <div class="message-row user-message">
+                    <div class="message-avatar user-avatar-small">
+                        {{ user.username|first|upper }}
+                    </div>
+                    <div class="message-content">
+                        <div class="message-name">You</div>
+                        <div class="message-text">{{ message.content|linebreaksbr }}</div>
+                    </div>
+                </div>
+
+            {% else %}
+                <div class="message-row ai-message">
+                    <div class="message-avatar ai-avatar">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
+                             stroke="currentColor" stroke-width="2.5"
+                             stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M2 12h4l1.5-4 3 9 3-14 2.5 9h2.5l1.5-3 1 3H22"/>
+                        </svg>
+                    </div>
+                    <div class="message-content">
+                        <div class="message-name">FITGPT</div>
+                        <div class="message-text">{{ message.content|linebreaksbr }}</div>
+                    </div>
+                </div>
+            {% endif %}
+
+        {% endfor %}
+
+    {% else %}
+
+        <!-- WELCOME SCREEN -->
+        <div class="chat-welcome">
+
+            <div class="welcome-logo">
                 <svg width="30" height="30" viewBox="0 0 24 24" fill="none"
-                     stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                     stroke="currentColor" stroke-width="2.5"
+                     stroke-linecap="round" stroke-linejoin="round">
                     <path d="M2 12h4l1.5-4 3 9 3-14 2.5 9h2.5l1.5-3 1 3H22"/>
                 </svg>
             </div>
 
-            <h2>Ask FITGPT about your documents</h2>
-            <p class="text-secondary">Pick a document and ask your first question to start a chat.</p>
+            <h2>Where should we begin?</h2>
+            <p>Ask FITGPT anything, or attach a document to chat with it.</p>
 
-        </div>
+            <div class="mode-cards">
 
-    {% else %}
-
-        <div class="chat-thread">
-
-            {% for m in messages %}
-
-                <div class="chat-msg chat-msg-{{ m.role }}">
-
-                    <div class="chat-msg-role">
-                        {% if m.role == "user" %}You{% else %}FITGPT{% endif %}
+                <button type="button" class="mode-card active" id="welcomeGeneralCard"
+                        onclick="selectMode('general')">
+                    <div class="mode-icon">✦</div>
+                    <div>
+                        <strong>General AI</strong>
+                        <p>Ask anything — FITGPT will help you understand, learn, and explore.</p>
                     </div>
+                </button>
 
-                    <div class="chat-msg-bubble" style="white-space: pre-wrap;">{{ m.content }}</div>
+                <button type="button" class="mode-card" id="welcomeDocCard"
+                        onclick="selectMode('document')">
+                    <div class="mode-icon">📄</div>
+                    <div>
+                        <strong>Document AI</strong>
+                        <p>Upload or select a document and ask questions about its contents.</p>
+                    </div>
+                </button>
 
-                </div>
-
-            {% endfor %}
+            </div>
 
         </div>
 
     {% endif %}
 
-    {% if error %}
+</section>
 
-        <div class="alert alert-danger chat-error">
+
+<!-- =====================================================
+     INPUT AREA
+===================================================== -->
+
+<div class="chat-input-area">
+
+    <!-- Error banner -->
+    {% if error %}
+        <div class="chat-error" id="chatErrorBanner">
             {{ error }}
         </div>
-
     {% endif %}
 
-    <!-- ================= COMPOSER ================= -->
+    <!-- Uploaded doc chip (shown via JS after AJAX upload) -->
+    <div class="doc-chip-area" id="docChipArea" style="display:none;">
+        <div class="doc-chip" id="docChip">
+            <span>📄</span>
+            <span class="doc-chip-name" id="docChipName"></span>
+            <span class="doc-chip-status" id="docChipStatus">Uploading...</span>
+            <button type="button" class="doc-chip-remove" id="docChipRemove"
+                    onclick="removeAttachedDoc()" title="Remove document">✕</button>
+        </div>
+    </div>
 
-    <form method="POST" class="chat-composer">
+    <form
+        method="POST"
+        action="{% if active_session %}{% url 'chat_session' active_session.id %}{% else %}{% url 'chat_home' %}{% endif %}"
+        class="chat-form"
+        id="chatForm"
+        enctype="multipart/form-data">
 
         {% csrf_token %}
 
-        {% if not active_session %}
+        <!-- Hidden fields -->
+        <input type="hidden" name="mode" id="chatMode"
+               value="{% if active_session %}{{ active_session.mode }}{% else %}general{% endif %}">
 
-            <select name="document" class="form-select chat-doc-select" required>
+        <input type="hidden" name="document" id="chatDocumentId"
+               value="{% if active_session and active_session.document_id %}{{ active_session.document_id }}{% endif %}">
 
-                <option value="">Select a document</option>
+        <!-- Hidden file input for AJAX upload -->
+        <input type="file" id="fileInput" accept=".pdf,.docx,.txt"
+               style="display:none;" onchange="handleFileSelected(this)">
 
-                {% for document in documents %}
-                    <option value="{{ document.id }}">{{ document.title }}</option>
+        <!-- Existing document selector (shown when document mode selected) -->
+        <div class="document-selector" id="documentSelector"
+             {% if not active_session or active_session.mode != "document" %}style="display:none;"{% endif %}>
+
+            <span class="document-selector-label">📄 Select document</span>
+
+            <select name="_doc_select" id="documentSelect" class="document-select"
+                    onchange="handleDocumentSelectChange(this)">
+                <option value="">Choose a document...</option>
+                {% for doc in documents %}
+                    <option value="{{ doc.id }}"
+                            {% if active_session and active_session.document_id == doc.id %}selected{% endif %}>
+                        {{ doc.title|truncatechars:40 }}
+                        {% if doc.processing_status == 'ready' %}✓{% elif doc.processing_status == 'failed' %}✕{% endif %}
+                    </option>
+                {% empty %}
+                    <option value="" disabled>No documents uploaded yet</option>
                 {% endfor %}
-
             </select>
 
-        {% else %}
+            <button type="button" class="upload-document-link" onclick="triggerUpload()">
+                + Upload new
+            </button>
 
-            <div class="chat-doc-pill">
-                Chatting about: <strong>{{ active_session.document.title }}</strong>
-            </div>
+        </div>
 
-        {% endif %}
 
-        <div class="chat-input-row">
+        <!-- Composer box -->
+        <div class="input-wrapper">
 
+            <!-- Attach button -->
+            <button type="button" class="attach-btn" id="attachBtn"
+                    onclick="showAttachMenu()" title="Attach a document">
+                <svg width="17" height="17" viewBox="0 0 24 24" fill="none"
+                     stroke="currentColor" stroke-width="2"
+                     stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="12" y1="5" x2="12" y2="19"/>
+                    <line x1="5" y1="12" x2="19" y2="12"/>
+                </svg>
+            </button>
+
+            <!-- Textarea -->
             <textarea
                 name="question"
-                class="form-control chat-textarea"
+                id="questionInput"
+                placeholder="Ask FITGPT anything..."
                 rows="1"
-                placeholder="Ask anything about your document..."
                 required
+                autocomplete="off"
             ></textarea>
 
-            <button type="submit" class="chat-send-btn">
-                <span class="ai-pulse-dot"></span>
-                Ask
+            <!-- Send button -->
+            <button type="submit" class="send-button" id="sendButton" title="Send (Enter)">
+                ↑
             </button>
+
+        </div>
+
+        <!-- Attach dropdown menu -->
+        <div id="attachMenu"
+             style="display:none; position:absolute; bottom:100px; left:24px;
+                    background:var(--surface-2); border:1px solid var(--border);
+                    border-radius:var(--radius-sm); padding:6px; z-index:100; min-width:200px;">
+
+            <button type="button" onclick="triggerUpload()"
+                    style="display:flex; align-items:center; gap:8px; width:100%;
+                           padding:9px 12px; background:transparent; border:none;
+                           color:var(--text); font-size:13px; border-radius:var(--radius-xs);
+                           cursor:pointer; transition:background 0.15s;"
+                    onmouseover="this.style.background='var(--surface-hover)'"
+                    onmouseout="this.style.background='transparent'">
+                📤 Upload new document
+            </button>
+
+            <button type="button" onclick="selectMode('document'); hideAttachMenu();"
+                    style="display:flex; align-items:center; gap:8px; width:100%;
+                           padding:9px 12px; background:transparent; border:none;
+                           color:var(--text); font-size:13px; border-radius:var(--radius-xs);
+                           cursor:pointer; transition:background 0.15s;"
+                    onmouseover="this.style.background='var(--surface-hover)'"
+                    onmouseout="this.style.background='transparent'">
+                📂 Choose existing document
+            </button>
+
+        </div>
+
+
+        <!-- Mode switch + hint -->
+        <div class="input-footer">
+
+            <div class="mode-switch">
+                <button type="button" id="generalModeBtn"
+                        class="mode-switch-btn {% if not active_session or active_session.mode == 'general' %}active{% endif %}"
+                        onclick="selectMode('general')">
+                    ✦ General AI
+                </button>
+                <button type="button" id="documentModeBtn"
+                        class="mode-switch-btn {% if active_session and active_session.mode == 'document' %}active{% endif %}"
+                        onclick="selectMode('document')">
+                    📄 Document AI
+                </button>
+            </div>
+
+            <span class="input-hint">Enter to send · Shift+Enter for newline</span>
 
         </div>
 
@@ -99,4 +280,333 @@
 
 </div>
 
+
+{% endblock %}
+
+
+{% block extra_js %}
+<script>
+
+/* =====================================================
+   STATE
+===================================================== */
+
+let uploadedDocId = null;
+let isWaitingForResponse = false;
+
+// If we're in an active document session, pre-set the doc ID
+{% if active_session and active_session.document_id %}
+    uploadedDocId = {{ active_session.document_id }};
+{% endif %}
+
+
+/* =====================================================
+   MODE SELECTION
+===================================================== */
+
+function selectMode(mode) {
+
+    const chatMode     = document.getElementById('chatMode');
+    const docSelector  = document.getElementById('documentSelector');
+    const generalBtn   = document.getElementById('generalModeBtn');
+    const documentBtn  = document.getElementById('documentModeBtn');
+    const docCard      = document.getElementById('welcomeDocCard');
+    const genCard      = document.getElementById('welcomeGeneralCard');
+
+    if (chatMode) chatMode.value = mode;
+
+    if (mode === 'general') {
+
+        if (docSelector)  docSelector.style.display  = 'none';
+        if (generalBtn)   generalBtn.classList.add('active');
+        if (documentBtn)  documentBtn.classList.remove('active');
+        if (genCard)      { genCard.classList.add('active'); }
+        if (docCard)      { docCard.classList.remove('active'); }
+
+        // Clear document selection only if not an active session doc
+        {% if not active_session %}
+            clearAttachedDoc();
+        {% endif %}
+
+    } else if (mode === 'document') {
+
+        if (docSelector)  docSelector.style.display  = 'flex';
+        if (generalBtn)   generalBtn.classList.remove('active');
+        if (documentBtn)  documentBtn.classList.add('active');
+        if (genCard)      { genCard.classList.remove('active'); }
+        if (docCard)      { docCard.classList.add('active'); }
+
+    }
+
+    hideAttachMenu();
+}
+
+
+/* =====================================================
+   DOCUMENT SELECT (existing docs dropdown)
+===================================================== */
+
+function handleDocumentSelectChange(select) {
+    const docId = select.value;
+    const hiddenInput = document.getElementById('chatDocumentId');
+    if (hiddenInput) hiddenInput.value = docId || '';
+
+    // Clear any AJAX-uploaded doc if user selects from dropdown
+    if (docId) {
+        uploadedDocId = null;
+        hideDocChip();
+    }
+}
+
+
+/* =====================================================
+   ATTACH MENU
+===================================================== */
+
+function showAttachMenu() {
+    const menu = document.getElementById('attachMenu');
+    if (menu) {
+        menu.style.display = menu.style.display === 'none' ? 'block' : 'none';
+    }
+}
+
+function hideAttachMenu() {
+    const menu = document.getElementById('attachMenu');
+    if (menu) menu.style.display = 'none';
+}
+
+document.addEventListener('click', function(e) {
+    const menu    = document.getElementById('attachMenu');
+    const btn     = document.getElementById('attachBtn');
+    if (menu && !menu.contains(e.target) && !btn.contains(e.target)) {
+        hideAttachMenu();
+    }
+});
+
+
+/* =====================================================
+   FILE UPLOAD TRIGGER
+===================================================== */
+
+function triggerUpload() {
+    hideAttachMenu();
+    document.getElementById('fileInput').click();
+}
+
+function handleFileSelected(input) {
+    const file = input.files[0];
+    if (!file) return;
+
+    const allowed = ['application/pdf',
+                     'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+                     'text/plain'];
+    const allowedExt = ['pdf', 'docx', 'txt'];
+    const ext = file.name.split('.').pop().toLowerCase();
+
+    if (!allowedExt.includes(ext)) {
+        showChatError('Unsupported file type. Please upload PDF, DOCX, or TXT.');
+        input.value = '';
+        return;
+    }
+
+    showDocChip(file.name, 'Uploading...');
+    selectMode('document');
+    uploadFileAjax(file);
+}
+
+function uploadFileAjax(file) {
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('title', file.name.replace(/\.[^.]+$/, ''));
+    formData.append('ajax', '1');
+    formData.append('csrfmiddlewaretoken', getCookie('csrftoken'));
+
+    fetch('{% url "upload_document" %}', {
+        method: 'POST',
+        body: formData,
+        headers: { 'X-Requested-With': 'XMLHttpRequest' }
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.success) {
+            uploadedDocId = data.document_id;
+
+            // Update hidden document field
+            const hiddenInput = document.getElementById('chatDocumentId');
+            if (hiddenInput) hiddenInput.value = data.document_id;
+
+            if (data.extraction_ok) {
+                updateDocChip(data.document_title, '✓ Ready', 'ready');
+            } else {
+                updateDocChip(data.document_title,
+                              '✕ Extraction failed — ' + (data.extraction_error || 'unknown error'),
+                              'failed');
+            }
+        } else {
+            showChatError(data.error || 'Upload failed.');
+            hideDocChip();
+        }
+    })
+    .catch(err => {
+        showChatError('Upload failed. Please try again.');
+        hideDocChip();
+        console.error(err);
+    });
+
+    // Reset file input so the same file can be re-selected if needed
+    document.getElementById('fileInput').value = '';
+}
+
+
+/* =====================================================
+   DOC CHIP
+===================================================== */
+
+function showDocChip(name, statusText) {
+    const area   = document.getElementById('docChipArea');
+    const chip   = document.getElementById('docChip');
+    const cName  = document.getElementById('docChipName');
+    const cStatus = document.getElementById('docChipStatus');
+
+    if (area) area.style.display = 'block';
+    if (cName) cName.textContent = name;
+    if (cStatus) cStatus.textContent = statusText;
+    if (chip) {
+        chip.className = 'doc-chip';
+    }
+}
+
+function updateDocChip(name, statusText, state) {
+    const chip    = document.getElementById('docChip');
+    const cName   = document.getElementById('docChipName');
+    const cStatus = document.getElementById('docChipStatus');
+
+    if (cName)   cName.textContent   = name;
+    if (cStatus) cStatus.textContent = statusText;
+    if (chip) {
+        chip.className = 'doc-chip ' + state;
+    }
+}
+
+function hideDocChip() {
+    const area = document.getElementById('docChipArea');
+    if (area) area.style.display = 'none';
+}
+
+function removeAttachedDoc() {
+    uploadedDocId = null;
+    const hidden = document.getElementById('chatDocumentId');
+    if (hidden) hidden.value = '';
+    hideDocChip();
+    // Reset mode to general if no session
+    {% if not active_session %}
+        selectMode('general');
+    {% endif %}
+}
+
+
+/* =====================================================
+   FORM SUBMISSION
+===================================================== */
+
+const chatForm = document.getElementById('chatForm');
+
+if (chatForm) {
+    chatForm.addEventListener('submit', function(e) {
+
+        const q = document.getElementById('questionInput').value.trim();
+        if (!q) { e.preventDefault(); return; }
+
+        if (isWaitingForResponse) { e.preventDefault(); return; }
+
+        // Ensure chatDocumentId is set from either AJAX upload or dropdown
+        const dropdownVal = document.getElementById('documentSelect')?.value;
+        const hiddenVal   = document.getElementById('chatDocumentId')?.value;
+
+        if (!hiddenVal && dropdownVal) {
+            document.getElementById('chatDocumentId').value = dropdownVal;
+        }
+
+        // Show thinking state
+        setLoading(true);
+    });
+}
+
+function setLoading(on) {
+    isWaitingForResponse = on;
+    const btn = document.getElementById('sendButton');
+    if (btn) {
+        btn.disabled = on;
+        btn.textContent = on ? '…' : '↑';
+    }
+}
+
+
+/* =====================================================
+   ERROR BANNER
+===================================================== */
+
+function showChatError(msg) {
+    let banner = document.getElementById('chatErrorBanner');
+    if (!banner) {
+        banner = document.createElement('div');
+        banner.id = 'chatErrorBanner';
+        banner.className = 'chat-error';
+        const form = document.getElementById('chatForm');
+        form.parentNode.insertBefore(banner, form);
+    }
+    banner.textContent = msg;
+    banner.style.display = 'block';
+    setTimeout(() => { banner.style.display = 'none'; }, 6000);
+}
+
+
+/* =====================================================
+   AUTO RESIZE TEXTAREA
+===================================================== */
+
+const questionInput = document.getElementById('questionInput');
+
+if (questionInput) {
+    questionInput.addEventListener('input', function() {
+        this.style.height = 'auto';
+        this.style.height = Math.min(this.scrollHeight, 180) + 'px';
+    });
+
+    questionInput.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            if (this.value.trim()) chatForm.requestSubmit();
+        }
+    });
+
+    // Auto-focus on load
+    questionInput.focus();
+}
+
+
+/* =====================================================
+   AUTO SCROLL TO BOTTOM
+===================================================== */
+
+const chatMessages = document.getElementById('chatMessages');
+if (chatMessages) {
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+}
+
+
+/* =====================================================
+   CSRF HELPER
+===================================================== */
+
+function getCookie(name) {
+    const cookies = document.cookie.split(';');
+    for (let c of cookies) {
+        c = c.trim();
+        if (c.startsWith(name + '=')) return decodeURIComponent(c.slice(name.length + 1));
+    }
+    return null;
+}
+
+</script>
 {% endblock %}

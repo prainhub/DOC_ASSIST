@@ -1,42 +1,43 @@
 {% extends "base.html" %}
 
-{% block title %}Upload Document{% endblock %}
+{% block title %}Upload Document — DOCASSIST{% endblock %}
 
 {% block content %}
 
-<div class="container mt-5" style="max-width:600px;">
+<div class="upload-page">
+    <div class="upload-card">
 
-    <h2 class="mb-4">Upload PDF</h2>
+        <h2>Upload Document</h2>
 
-    <form method="POST" enctype="multipart/form-data">
+        {% if error %}
+            <div class="auth-error" style="margin-bottom:16px;">{{ error }}</div>
+        {% endif %}
 
-        {% csrf_token %}
+        <form method="POST" enctype="multipart/form-data" id="uploadForm">
+            {% csrf_token %}
 
-        <div class="mb-3">
-            <label class="form-label">Document Title</label>
-            <input
-                type="text"
-                name="title"
-                class="form-control"
-                required>
+            <label class="auth-label" for="uploadTitle">Document title</label>
+            <input type="text" name="title" id="uploadTitle"
+                   class="upload-input" placeholder="e.g. My Resume">
+
+            <label class="auth-label" for="uploadFile">File</label>
+            <input type="file" name="file" id="uploadFile"
+                   class="upload-input" accept=".pdf,.docx,.txt" required>
+            <p style="font-size:11.5px; color:var(--text-dim); margin-top:-8px; margin-bottom:16px;">
+                Supported: PDF, DOCX, TXT
+            </p>
+
+            <button type="submit" class="upload-btn">Upload &amp; Extract</button>
+
+        </form>
+
+        <div style="margin-top:14px; text-align:center;">
+            <a href="{% url 'document_list' %}" style="color:var(--text-sec); font-size:13px;">
+                ← Back to My Documents
+            </a>
         </div>
 
-        <div class="mb-3">
-            <label class="form-label">Choose PDF</label>
-            <input
-                type="file"
-                name="file"
-                class="form-control"
-                accept=".pdf"
-                required>
-        </div>
-
-        <button class="btn btn-primary">
-            Upload
-        </button>
-
-    </form>
-
+    </div>
 </div>
 
 {% endblock %}

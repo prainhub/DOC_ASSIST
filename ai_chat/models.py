@@ -5,7 +5,16 @@ from documents.models import Document
 
 class ChatSession(models.Model):
 
-    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="chat_sessions")
+    MODE_CHOICES = [
+        ("general", "General AI"),
+        ("document", "Document AI"),
+    ]
+
+    user = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name="chat_sessions"
+    )
 
     document = models.ForeignKey(
         Document,
@@ -15,10 +24,24 @@ class ChatSession(models.Model):
         related_name="chat_sessions",
     )
 
-    title = models.CharField(max_length=255, blank=True)
+    mode = models.CharField(
+        max_length=20,
+        choices=MODE_CHOICES,
+        default="general",
+    )
 
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
+    title = models.CharField(
+        max_length=255,
+        blank=True
+    )
+
+    created_at = models.DateTimeField(
+        auto_now_add=True
+    )
+
+    updated_at = models.DateTimeField(
+        auto_now=True
+    )
 
     class Meta:
         ordering = ["-updated_at"]
@@ -34,13 +57,22 @@ class ChatMessage(models.Model):
         ("assistant", "Assistant"),
     ]
 
-    session = models.ForeignKey(ChatSession, on_delete=models.CASCADE, related_name="messages")
+    session = models.ForeignKey(
+        ChatSession,
+        on_delete=models.CASCADE,
+        related_name="messages"
+    )
 
-    role = models.CharField(max_length=10, choices=ROLE_CHOICES)
+    role = models.CharField(
+        max_length=10,
+        choices=ROLE_CHOICES
+    )
 
     content = models.TextField()
 
-    created_at = models.DateTimeField(auto_now_add=True)
+    created_at = models.DateTimeField(
+        auto_now_add=True
+    )
 
     class Meta:
         ordering = ["created_at"]
