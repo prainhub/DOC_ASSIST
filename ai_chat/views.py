@@ -1,12 +1,14 @@
-from django.shortcuts import render, redirect, get_object_or_404
-from django.contrib.auth.decorators import login_required
-from django.http import JsonResponse
+"""Views and helper functions for the AI Chat app."""
+from google import genai
+
 from django.conf import settings
+from django.contrib.auth.decorators import login_required
+from django.shortcuts import get_object_or_404, redirect, render
 
 from documents.models import Document
-from .models import ChatSession, ChatMessage
+from .models import ChatMessage, ChatSession
 
-from google import genai
+
 
 
 # -------------------------------------------------------
@@ -78,17 +80,39 @@ Instructions:
 - Use bullet points and code blocks where appropriate.
 - If you are unsure about something, say so clearly."""
 
-    # ── Call Gemini API ───────────────────────────────────
+    # ── Call Gemini API with Fallback Models ───────────────
     client = genai.Client(
         api_key=settings.GEMINI_API_KEY
     )
 
-    response = client.models.generate_content(
-        model="gemini-2.0-flash",
-        contents=prompt
-    )
+    models_to_try = [
+        "gemini-flash-latest",
+        "gemini-3.6-flash",
+        "gemini-3.1-flash-lite",
+        "gemini-3.5-flash-lite",
+        "gemini-2.0-flash",
+    ]
 
-    return response.text
+
+
+    last_error = None
+    for model_name in models_to_try:
+        try:
+            response = client.models.generate_content(
+                model=model_name,
+                contents=prompt
+            )
+            if response and response.text:
+                return response.text
+        except Exception as exc:  # pylint: disable=broad-exception-caught
+            last_error = exc
+            continue
+
+    if last_error:
+        raise last_error
+
+    return "No response received from the AI model."
+
 
 
 def _format_ai_error(exc):
@@ -173,7 +197,7 @@ def chat_home(request):
 
             try:
                 answer = _ask_gemini(question=question)
-            except Exception as e:
+            except Exception as e:  # pylint: disable=broad-exception-caught
                 answer = _format_ai_error(e)
 
             ChatMessage.objects.create(
@@ -224,7 +248,7 @@ def chat_home(request):
                             question=question,
                             document=document
                         )
-                    except Exception as e:
+                    except Exception as e:  # pylint: disable=broad-exception-caught
                         answer = _format_ai_error(e)
 
                     ChatMessage.objects.create(
@@ -299,7 +323,7 @@ def chat_session(request, session_id):
                         document=document,
                         history=history
                     )
-                except Exception as e:
+                except Exception as e:  # pylint: disable=broad-exception-caught
                     answer = _format_ai_error(e)
 
                 ChatMessage.objects.create(
@@ -328,7 +352,7 @@ def chat_session(request, session_id):
                     question=question,
                     history=history
                 )
-            except Exception as e:
+            except Exception as e:  # pylint: disable=broad-exception-caught
                 answer = _format_ai_error(e)
 
             ChatMessage.objects.create(

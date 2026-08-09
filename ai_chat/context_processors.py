@@ -1,9 +1,9 @@
+"""Context processors for ai_chat app."""
 from .models import ChatSession
 
 
 def sidebar_sessions(request):
     """Makes recent chat sessions available to the global sidebar on every page."""
-
     if request.user.is_authenticated:
         sessions = ChatSession.objects.filter(
             user=request.user

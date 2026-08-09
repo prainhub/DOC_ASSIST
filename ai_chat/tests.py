@@ -1,3 +1,1 @@
-from django.test import TestCase
-
-# Create your tests here.
+"""Unit tests for ai_chat app."""

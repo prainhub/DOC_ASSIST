@@ -1,9 +1,11 @@
+"""Models for AI Chat sessions and messages."""
+from django.conf import settings
 from django.db import models
-from django.contrib.auth.models import User
 from documents.models import Document
 
 
 class ChatSession(models.Model):
+    """Represents a chat conversation session between a user and the AI."""
 
     MODE_CHOICES = [
         ("general", "General AI"),
@@ -11,7 +13,7 @@ class ChatSession(models.Model):
     ]
 
     user = models.ForeignKey(
-        User,
+        settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
         related_name="chat_sessions"
     )
@@ -44,6 +46,7 @@ class ChatSession(models.Model):
     )
 
     class Meta:
+        """Meta options for ChatSession model."""
         ordering = ["-updated_at"]
 
     def __str__(self):
@@ -51,6 +54,7 @@ class ChatSession(models.Model):
 
 
 class ChatMessage(models.Model):
+    """Represents an individual message within a ChatSession."""
 
     ROLE_CHOICES = [
         ("user", "User"),
@@ -75,6 +79,7 @@ class ChatMessage(models.Model):
     )
 
     class Meta:
+        """Meta options for ChatMessage model."""
         ordering = ["created_at"]
 
     def __str__(self):

@@ -1,0 +1,13 @@
+[MAIN]
+load-plugins=pylint_django
+django-settings-module=config.settings
+ignore=migrations
+
+[MESSAGES CONTROL]
+disable=
+    missing-docstring,
+    too-few-public-methods,
+    no-member
+
+[FORMAT]
+max-line-length=100
