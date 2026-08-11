@@ -31,7 +31,8 @@ SECRET_KEY = 'django-insecure-kq*!ciny4n995v$hsv!xvvh%$-3cy$5x3c_2j&(zf**)s#&)n0
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ["*"]
+
 
 
 # Application definition
@@ -140,3 +141,4 @@ MEDIA_ROOT = BASE_DIR /"media"
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 
 LOGIN_URL = 'login'
+
