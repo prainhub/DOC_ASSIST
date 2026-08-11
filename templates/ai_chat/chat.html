@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}{% if active_session %}{{ active_session.title|truncatechars:40 }} — {% endif %}FITGPT{% endblock %}
+{% block title %}{% if active_session %}{{ active_session.title|truncatechars:40 }} — {% endif %}DOCASSIST{% endblock %}
 
 {% block content %}
 
@@ -19,7 +19,7 @@
             </svg>
         </div>
         <div>
-            <h1>FITGPT</h1>
+            <h1>DOCASSIST</h1>
             {% if active_session %}
                 {% if active_session.mode == "document" %}
                     <span class="chat-status">📄 Document AI</span>
@@ -72,7 +72,7 @@
                         </svg>
                     </div>
                     <div class="message-content">
-                        <div class="message-name">FITGPT</div>
+                        <div class="message-name">DOCASSIST</div>
                         <div class="message-text">{{ message.content|linebreaksbr }}</div>
                     </div>
                 </div>
@@ -94,7 +94,7 @@
             </div>
 
             <h2>Where should we begin?</h2>
-            <p>Ask FITGPT anything, or attach a document to chat with it.</p>
+            <p>Ask DOCASSIST anything, or attach a document to chat with it.</p>
 
             <div class="mode-cards">
 
