@@ -414,6 +414,23 @@ function handleFileSelected(input) {
     uploadFileAjax(file);
 }
 
+function addDocumentOption(docId, title, statusIcon) {
+    const select = document.getElementById('documentSelect');
+    if (!select) return;
+
+    const emptyOption = select.querySelector('option[value=""][disabled]');
+    if (emptyOption) emptyOption.remove();
+
+    let option = select.querySelector('option[value="' + docId + '"]');
+    if (!option) {
+        option = document.createElement('option');
+        option.value = docId;
+        select.appendChild(option);
+    }
+    option.textContent = title + (statusIcon ? ' ' + statusIcon : '');
+    select.value = docId;
+}
+
 function uploadFileAjax(file) {
     const formData = new FormData();
     formData.append('file', file);
@@ -431,9 +448,11 @@ function uploadFileAjax(file) {
         if (data.success) {
             uploadedDocId = data.document_id;
 
-            // Update hidden document field
             const hiddenInput = document.getElementById('chatDocumentId');
             if (hiddenInput) hiddenInput.value = data.document_id;
+
+            const statusIcon = data.extraction_ok ? '✓' : '✕';
+            addDocumentOption(data.document_id, data.document_title, statusIcon);
 
             if (data.extraction_ok) {
                 updateDocChip(data.document_title, '✓ Ready', 'ready');
@@ -453,7 +472,6 @@ function uploadFileAjax(file) {
         console.error(err);
     });
 
-    // Reset file input so the same file can be re-selected if needed
     document.getElementById('fileInput').value = '';
 }
 

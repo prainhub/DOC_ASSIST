@@ -5,9 +5,13 @@ import traceback
 from django.conf import settings
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import get_object_or_404, redirect, render
+from django.views.decorators.http import require_POST
 
 from documents.models import Document
 from .models import ChatMessage, ChatSession
+from documents.models import Document, DocumentChunk
+from documents.retrieval import get_relevant_chunks
+from  .models import ChatMessage, ChatSession
 
 
 
@@ -56,17 +60,21 @@ def _ask_gemini(question, document=None, history=None):
     # -----------------------------------------
     # Document AI
     # -----------------------------------------
-
     if document:
 
-        doc_text = (
-            document.extracted_text[:12000]
-            if document.extracted_text
-            else ""
-        )
+        relevant_chunks = get_relevant_chunks(document, question)
+
+        if relevant_chunks:
+            doc_text = "\n\n---\n\n".join(chunk.content for chunk in relevant_chunks)
+        else:
+            doc_text = (
+                document.extracted_text[:12000]
+                if document.extracted_text
+                else ""
+            )
 
         prompt = f"""
-You are FITGPT, an AI Document Assistant.
+You are DOCASSIST, an AI Document Assistant.
 
 Answer the user's question using the uploaded document.
 
@@ -83,17 +91,13 @@ USER QUESTION:
 
 Instructions:
 
-- Use the document as the primary source.
-- Answer clearly and accurately.
-- If the answer cannot be found in the document, say:
-  "The answer to this question is not available in the uploaded document."
-- Do not invent information.
+- Base your answer on the document's content.
+- You may reason, summarize, compare, and give advice or suggestions using what's in the document — this is expected when the user asks things like "how can I improve this" or "what's missing."
+- Only say the information is unavailable if the user asks about a specific fact or detail the document genuinely does not contain. In that case say:
+  "I couldn't find that specific information in the uploaded document."
+- Do not invent facts, numbers, or details that are not in the document.
 - Use bullet points when useful.
 """
-
-    # -----------------------------------------
-    # General AI
-    # -----------------------------------------
 
     else:
 
@@ -113,11 +117,6 @@ Instructions:
 - Use bullet points when useful.
 - If you are unsure, say so.
 """
-
-    # -----------------------------------------
-    # Gemini
-    # -----------------------------------------
-
     client = genai.Client(
         api_key=settings.GEMINI_API_KEY
     )
@@ -197,11 +196,6 @@ def _format_ai_error(exc):
         "Please try again. If the problem persists, check the server logs."
     )
 
-
-# -------------------------------------------------------
-# Views
-# -------------------------------------------------------
-
 @login_required
 def chat_home(request):
     """
@@ -219,11 +213,10 @@ def chat_home(request):
         document_id = request.POST.get("document")
         question = request.POST.get("question", "").strip()
 
-        # ── Validate question ────────────────────────────
+        
         if not question:
             error = "Please enter a question."
-
-        # ── GENERAL AI ───────────────────────────────────
+ 
         elif mode == "general":
 
             session = ChatSession.objects.create(
@@ -252,7 +245,7 @@ def chat_home(request):
 
             return redirect("chat_session", session_id=session.id)
 
-        # ── DOCUMENT AI ──────────────────────────────────
+        
         elif mode == "document":
 
             if not document_id:
@@ -424,6 +417,25 @@ def chat_session(request, session_id):
 @login_required
 def delete_session(request, session_id):
 
+    session = get_object_or_404(
+        ChatSession,
+        id=session_id,
+        user=request.user
+    )
+
+    session.delete()
+
+    return redirect("chat_home")
+
+
+@login_required
+@require_POST
+def delete_document(request, document_id):
+    document = get_object_or_404(Document, id=document_id, user=request.user)
+
+@login_required
+@require_POST
+def delete_session(request, session_id):
     session = get_object_or_404(
         ChatSession,
         id=session_id,

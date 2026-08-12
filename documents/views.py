@@ -1,24 +1,18 @@
 import os
 import json
+from .models import Document, DocumentChunk
+from .chunking import chunk_text
+from .embeddings import embed_chunks_for_document
 
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
-from django.http import JsonResponse
+from django.http import JsonResponse 
+from .models import Document, DocumentChunk
+from .chunking import chunk_text
 from django.views.decorators.http import require_POST
-
-from .models import Document
-
-
-# -------------------------------------------------------
-# Text extraction helpers
-# -------------------------------------------------------
+from django.conf import settings
 
 def _extract_text_from_file(document):
-    """
-    Extract text from a document based on its file extension.
-    Updates document.extracted_text and document.processing_status.
-    Returns (success: bool, error_message: str)
-    """
     ext = document.file_extension
 
     try:
@@ -47,6 +41,9 @@ def _extract_text_from_file(document):
         document.extracted_text = text
         document.processing_status = Document.STATUS_READY
         document.save(update_fields=['extracted_text', 'processing_status'])
+
+        _create_chunks_for_document(document)
+
         return True, ""
 
     except Exception as e:
@@ -78,9 +75,23 @@ def _extract_txt(filepath):
         return f.read()
 
 
-# -------------------------------------------------------
-# Allowed file extensions
-# -------------------------------------------------------
+def _create_chunks_for_document(document):
+    document.chunks.all().delete()
+
+    pieces = chunk_text(document.extracted_text)
+
+    chunk_objects = [
+        DocumentChunk(document=document, chunk_index=index, content=piece)
+        for index, piece in enumerate(pieces)
+    ]
+
+    if chunk_objects:
+        DocumentChunk.objects.bulk_create(chunk_objects)
+    try:
+        embed_chunks_for_document(document)
+    except Exception as exc:
+        print("Embedding generation failed:", exc)
+
 
 ALLOWED_EXTENSIONS = {'pdf', 'docx', 'txt'}
 
@@ -90,19 +101,8 @@ def _is_allowed_file(filename):
     return ext in ALLOWED_EXTENSIONS
 
 
-# -------------------------------------------------------
-# Views
-# -------------------------------------------------------
-
 @login_required
 def upload_document(request):
-    """
-    Upload a document and automatically extract its text.
-
-    Supports two response modes:
-    - AJAX (X-Requested-With: XMLHttpRequest or JSON body): returns JSON
-    - Normal POST: redirects to document_list
-    """
     if request.method == "POST":
 
         title = request.POST.get("title", "").strip()
@@ -113,8 +113,8 @@ def upload_document(request):
             or request.POST.get('ajax') == '1'
         )
 
-        # ── Validation ────────────────────────────────────
         if not uploaded_file:
+            msg = "No file provided."
             if is_ajax:
                 return JsonResponse({'success': False, 'error': 'No file provided.'}, status=400)
             return render(request, "documents/upload.html", {"error": "No file provided."})
@@ -125,11 +125,15 @@ def upload_document(request):
                 return JsonResponse({'success': False, 'error': msg}, status=400)
             return render(request, "documents/upload.html", {"error": msg})
 
+        if uploaded_file.size > settings.MAX_UPLOAD_SIZE_BYTES:
+            msg = f"File too large. Maximum allowed size is {settings.MAX_UPLOAD_SIZE_MB} MB."
+            if is_ajax:
+                return JsonResponse({'success': False, 'error': msg}, status=400)
+            return render(request, "documents/upload.html", {"error": msg})
+
         if not title:
-            # Default title to filename without extension
             title = os.path.splitext(uploaded_file.name)[0]
 
-        # ── Save document ─────────────────────────────────
         document = Document.objects.create(
             user=request.user,
             title=title,
@@ -137,7 +141,6 @@ def upload_document(request):
             processing_status=Document.STATUS_PENDING,
         )
 
-        # ── Auto-extract text ─────────────────────────────
         success, error_msg = _extract_text_from_file(document)
 
         if is_ajax:
@@ -161,21 +164,12 @@ def document_list(request):
         user=request.user
     ).order_by("-uploaded_at")
 
-    return render(request,
-        "documents/document_list.html",
-        {
-            "documents": documents,
-        }
-    )
+    return render(request, "documents/document_list.html", {"documents": documents})
 
 
 @login_required
 def delete_document(request, document_id):
-    document = get_object_or_404(
-        Document,
-        id=document_id,
-        user=request.user
-    )
+    document = get_object_or_404(Document, id=document_id, user=request.user)
 
     if document.file:
         if os.path.isfile(document.file.path):
@@ -188,15 +182,7 @@ def delete_document(request, document_id):
 
 @login_required
 def extract_text(request, document_id):
-    """
-    Manual extraction trigger (supports PDF, DOCX, TXT).
-    Still available as a fallback from My Documents.
-    """
-    document = get_object_or_404(
-        Document,
-        id=document_id,
-        user=request.user
-    )
+    document = get_object_or_404(Document, id=document_id, user=request.user)
 
     success, error_msg = _extract_text_from_file(document)
 
@@ -213,20 +199,11 @@ def extract_text(request, document_id):
 
 @login_required
 def chat_with_document(request, document_id):
-    """
-    Create a new chat session for a document and redirect to it.
-    Used by the [Chat with document] button on My Documents.
-    """
     from ai_chat.models import ChatSession
 
-    document = get_object_or_404(
-        Document,
-        id=document_id,
-        user=request.user
-    )
+    document = get_object_or_404(Document, id=document_id, user=request.user)
 
     if not document.extracted_text:
-        # Try to extract on the fly
         _extract_text_from_file(document)
 
     session = ChatSession.objects.create(
@@ -237,3 +214,16 @@ def chat_with_document(request, document_id):
     )
 
     return redirect('chat_session', session_id=session.id)
+
+@login_required
+@require_POST
+def delete_document(request, document_id):
+    document = get_object_or_404(Document, id=document_id, user=request.user)
+
+    if document.file:
+        if os.path.isfile(document.file.path):
+            os.remove(document.file.path)
+
+    document.delete()
+
+    return redirect("document_list")
