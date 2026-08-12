@@ -1,5 +1,6 @@
 """Views and helper functions for the AI Chat app."""
 from google import genai
+import traceback
 
 from django.conf import settings
 from django.contrib.auth.decorators import login_required
@@ -25,30 +26,52 @@ def _ask_gemini(question, document=None, history=None):
     """
     Send a question to Gemini.
 
-    If document is provided: Document AI mode.
-    If document is None:     General AI mode.
-    History is a list of ChatMessage objects.
+    If document is provided:
+        Document AI mode.
+
+    If document is None:
+        General AI mode.
     """
 
-    # ── Build conversation history string ────────────────
+    # -----------------------------------------
+    # Conversation history
+    # -----------------------------------------
+
     history_str = ""
+
     if history:
         history_str = "\n\nPREVIOUS CONVERSATION:\n"
+
         for msg in history:
             role_label = "User" if msg.role == "user" else "FITGPT"
-            history_str += f"{role_label}: {msg.content}\n"
-        history_str += "\nContinue the conversation naturally based on the above."
 
-    # ── Build prompt ──────────────────────────────────────
+            history_str += (
+                f"{role_label}: {msg.content}\n"
+            )
+
+        history_str += (
+            "\nContinue the conversation naturally."
+        )
+
+    # -----------------------------------------
+    # Document AI
+    # -----------------------------------------
+
     if document:
-        # Limit document text to avoid token overflows
-        doc_text = document.extracted_text[:12000] if document.extracted_text else ""
 
-        prompt = f"""You are FITGPT, an AI Document Assistant.
+        doc_text = (
+            document.extracted_text[:12000]
+            if document.extracted_text
+            else ""
+        )
 
-Answer the user's question using the document content provided below.
+        prompt = f"""
+You are FITGPT, an AI Document Assistant.
 
-DOCUMENT TITLE: {document.title}
+Answer the user's question using the uploaded document.
+
+DOCUMENT TITLE:
+{document.title}
 
 DOCUMENT CONTENT:
 {doc_text}
@@ -59,15 +82,23 @@ USER QUESTION:
 {question}
 
 Instructions:
-- Use the document as your primary source of information.
-- Answer clearly, accurately, and helpfully.
-- If the answer cannot be found in the document, clearly say:
+
+- Use the document as the primary source.
+- Answer clearly and accurately.
+- If the answer cannot be found in the document, say:
   "The answer to this question is not available in the uploaded document."
-- Do not invent or assume facts not present in the document.
-- Format your answer with clear paragraphs and bullet points where appropriate."""
+- Do not invent information.
+- Use bullet points when useful.
+"""
+
+    # -----------------------------------------
+    # General AI
+    # -----------------------------------------
 
     else:
-        prompt = f"""You are FITGPT, a helpful and intelligent general-purpose AI assistant.
+
+        prompt = f"""
+You are FITGPT, a helpful general-purpose AI assistant.
 
 {history_str}
 
@@ -75,44 +106,57 @@ USER QUESTION:
 {question}
 
 Instructions:
-- Be helpful, clear, and conversational.
-- Explain concepts accurately.
-- Use bullet points and code blocks where appropriate.
-- If you are unsure about something, say so clearly."""
 
-    # ── Call Gemini API with Fallback Models ───────────────
+- Be helpful and conversational.
+- Explain things clearly.
+- Give accurate answers.
+- Use bullet points when useful.
+- If you are unsure, say so.
+"""
+
+    # -----------------------------------------
+    # Gemini
+    # -----------------------------------------
+
     client = genai.Client(
         api_key=settings.GEMINI_API_KEY
     )
 
-    models_to_try = [
-        "gemini-flash-latest",
-        "gemini-3.6-flash",
-        "gemini-3.1-flash-lite",
-        "gemini-3.5-flash-lite",
-        "gemini-2.0-flash",
-    ]
+    print("\n==============================")
+    print("SENDING REQUEST TO GEMINI")
+    print("==============================")
+    print("Question:", question)
+    print("Model: gemini-3.5-flash")
 
+    try:
 
+        response = client.models.generate_content(
+            model="gemini-3.5-flash",
+            contents=prompt
+        )
 
-    last_error = None
-    for model_name in models_to_try:
-        try:
-            response = client.models.generate_content(
-                model=model_name,
-                contents=prompt
-            )
-            if response and response.text:
-                return response.text
-        except Exception as exc:  # pylint: disable=broad-exception-caught
-            last_error = exc
-            continue
+        print("==============================")
+        print("GEMINI RESPONSE RECEIVED")
+        print("==============================")
 
-    if last_error:
-        raise last_error
+        if response and response.text:
+            return response.text
 
-    return "No response received from the AI model."
+        return "Gemini returned an empty response."
 
+    except Exception as exc:
+
+        print("\n==============================")
+        print("GEMINI ERROR")
+        print("==============================")
+
+        print(str(exc))
+
+        traceback.print_exc()
+
+        print("==============================\n")
+
+        raise
 
 
 def _format_ai_error(exc):
