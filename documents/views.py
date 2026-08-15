@@ -19,19 +19,20 @@ def _extract_text_from_file(document):
         document.processing_status = Document.STATUS_PROCESSING
         document.save(update_fields=['processing_status'])
 
-        if ext == 'pdf':
-            text = _extract_pdf(document.file.path)
+        with document.file.open('rb') as file_obj:
+            if ext == 'pdf':
+                text = _extract_pdf(file_obj)
 
-        elif ext == 'docx':
-            text = _extract_docx(document.file.path)
+            elif ext == 'docx':
+                text = _extract_docx(file_obj)
 
-        elif ext == 'txt':
-            text = _extract_txt(document.file.path)
+            elif ext == 'txt':
+                text = _extract_txt(file_obj)
 
-        else:
-            document.processing_status = Document.STATUS_FAILED
-            document.save(update_fields=['processing_status'])
-            return False, f"Unsupported file type: .{ext}"
+            else:
+                document.processing_status = Document.STATUS_FAILED
+                document.save(update_fields=['processing_status'])
+                return False, f"Unsupported file type: .{ext}"
 
         if not text.strip():
             document.processing_status = Document.STATUS_FAILED
@@ -52,9 +53,9 @@ def _extract_text_from_file(document):
         return False, str(e)
 
 
-def _extract_pdf(filepath):
+def _extract_pdf(file_obj):
     from pypdf import PdfReader
-    reader = PdfReader(filepath)
+    reader = PdfReader(file_obj)
     text = ""
     for page in reader.pages:
         page_text = page.extract_text()
@@ -63,16 +64,18 @@ def _extract_pdf(filepath):
     return text
 
 
-def _extract_docx(filepath):
+def _extract_docx(file_obj):
     from docx import Document as DocxDocument
-    doc = DocxDocument(filepath)
+    doc = DocxDocument(file_obj)
     paragraphs = [p.text for p in doc.paragraphs if p.text.strip()]
     return "\n".join(paragraphs)
 
 
-def _extract_txt(filepath):
-    with open(filepath, 'r', encoding='utf-8', errors='replace') as f:
-        return f.read()
+def _extract_txt(file_obj):
+    content = file_obj.read()
+    if isinstance(content, bytes):
+        return content.decode('utf-8', errors='replace')
+    return content
 
 
 def _create_chunks_for_document(document):
@@ -221,8 +224,7 @@ def delete_document(request, document_id):
     document = get_object_or_404(Document, id=document_id, user=request.user)
 
     if document.file:
-        if os.path.isfile(document.file.path):
-            os.remove(document.file.path)
+        document.file.delete(save=False)
 
     document.delete()
 
