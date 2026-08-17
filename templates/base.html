@@ -21,6 +21,20 @@
 
 <body>
 
+<!-- Mobile menu toggle (only visible on small screens) -->
+<button class="mobile-menu-toggle" id="mobileMenuToggle" aria-label="Toggle menu">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none"
+         stroke="currentColor" stroke-width="2.2"
+         stroke-linecap="round" stroke-linejoin="round">
+        <line x1="4" y1="7" x2="20" y2="7"/>
+        <line x1="4" y1="12" x2="20" y2="12"/>
+        <line x1="4" y1="17" x2="20" y2="17"/>
+    </svg>
+</button>
+
+<!-- Dimmed backdrop shown behind the sidebar drawer on mobile -->
+<div class="sidebar-backdrop" id="sidebarBackdrop"></div>
+
 <!-- =====================================================
      GLOBAL SIDEBAR
 ===================================================== -->
@@ -70,7 +84,12 @@
             {% for s in global_sessions %}
                 <a href="{% url 'chat_session' s.id %}"
                    class="gs-session-item {% if active_session and active_session.id == s.id %}active{% endif %}">
-                    {{ s.title|default:"Untitled chat"|truncatechars:30 }}
+                    <svg class="gs-session-icon" width="13" height="13" viewBox="0 0 24 24" fill="none"
+                         stroke="currentColor" stroke-width="2"
+                         stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+                    </svg>
+                    <span class="gs-session-title">{{ s.title|default:"Untitled chat"|truncatechars:26 }}</span>
                 </a>
             {% empty %}
                 <p class="gs-empty">No chats yet.</p>
@@ -108,6 +127,44 @@
 
 
 {% block extra_js %}{% endblock %}
+
+<script>
+(function() {
+    const sidebar  = document.getElementById('globalSidebar');
+    const toggle   = document.getElementById('mobileMenuToggle');
+    const backdrop = document.getElementById('sidebarBackdrop');
+
+    function openSidebar() {
+        sidebar.classList.add('mobile-open');
+        backdrop.classList.add('visible');
+    }
+
+    function closeSidebar() {
+        sidebar.classList.remove('mobile-open');
+        backdrop.classList.remove('visible');
+    }
+
+    if (toggle) {
+        toggle.addEventListener('click', function() {
+            if (sidebar.classList.contains('mobile-open')) {
+                closeSidebar();
+            } else {
+                openSidebar();
+            }
+        });
+    }
+
+    if (backdrop) {
+        backdrop.addEventListener('click', closeSidebar);
+    }
+
+    // Close the drawer automatically when a sidebar link is tapped,
+    // so navigating doesn't leave it open over the new page.
+    sidebar.querySelectorAll('a').forEach(function(link) {
+        link.addEventListener('click', closeSidebar);
+    });
+})();
+</script>
 
 </body>
 </html>

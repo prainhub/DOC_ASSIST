@@ -73,7 +73,7 @@
                     </div>
                     <div class="message-content">
                         <div class="message-name">DOCASSIST</div>
-                        <div class="message-text">{{ message.content|linebreaksbr }}</div>
+                        <div class="message-text markdown-body">{{ message.content }}</div>
                     </div>
                 </div>
             {% endif %}
@@ -285,7 +285,22 @@
 
 
 {% block extra_js %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/marked/4.3.0/marked.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.0.6/purify.min.js"></script>
 <script>
+
+/* =====================================================
+   RENDER MARKDOWN IN AI REPLIES
+===================================================== */
+
+document.addEventListener('DOMContentLoaded', function() {
+    document.querySelectorAll('.markdown-body').forEach(function(el) {
+        const raw = el.textContent;
+        const html = DOMPurify.sanitize(marked.parse(raw));
+        el.innerHTML = html;
+    });
+});
+
 
 /* =====================================================
    STATE
@@ -414,6 +429,23 @@ function handleFileSelected(input) {
     uploadFileAjax(file);
 }
 
+function addDocumentOption(docId, title, statusIcon) {
+    const select = document.getElementById('documentSelect');
+    if (!select) return;
+
+    const emptyOption = select.querySelector('option[value=""][disabled]');
+    if (emptyOption) emptyOption.remove();
+
+    let option = select.querySelector('option[value="' + docId + '"]');
+    if (!option) {
+        option = document.createElement('option');
+        option.value = docId;
+        select.appendChild(option);
+    }
+    option.textContent = title + (statusIcon ? ' ' + statusIcon : '');
+    select.value = docId;
+}
+
 function uploadFileAjax(file) {
     const formData = new FormData();
     formData.append('file', file);
@@ -434,6 +466,9 @@ function uploadFileAjax(file) {
             // Update hidden document field
             const hiddenInput = document.getElementById('chatDocumentId');
             if (hiddenInput) hiddenInput.value = data.document_id;
+
+            const statusIcon = data.extraction_ok ? '✓' : '✕';
+            addDocumentOption(data.document_id, data.document_title, statusIcon);
 
             if (data.extraction_ok) {
                 updateDocChip(data.document_title, '✓ Ready', 'ready');

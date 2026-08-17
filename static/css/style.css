@@ -1,3 +1,13 @@
+/* =====================================================
+   FITGPT / DOCASSIST  — Design System
+   Dark theme · Volt-lime accent · Persistent sidebar
+   ===================================================== */
+
+
+/* =====================================================
+   1. CSS VARIABLES / DESIGN TOKENS
+   ===================================================== */
+
 :root {
     /* Background layers */
     --bg:           #0f1117;
@@ -189,7 +199,8 @@ button { cursor: pointer; }
 .gs-session-list {
     display: flex;
     flex-direction: column;
-    gap: 1px;
+    gap: 3px;
+    padding-top: 2px;
     overflow-y: auto;
     flex: 1;
     scrollbar-width: thin;
@@ -201,15 +212,27 @@ button { cursor: pointer; }
 .gs-session-list::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
 
 .gs-session-item {
-    display: block;
+    display: flex;
+    align-items: center;
+    gap: 8px;
     color: var(--text-sec);
     font-size: 13px;
-    padding: 7px 10px;
+    line-height: 1.3;
+    padding: 8px 10px;
     border-radius: var(--radius-sm);
+    transition: background 0.15s, color 0.15s;
+}
+
+.gs-session-icon {
+    flex-shrink: 0;
+    opacity: 0.55;
+    transition: opacity 0.15s;
+}
+
+.gs-session-title {
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    transition: background 0.15s, color 0.15s;
 }
 
 .gs-session-item:hover {
@@ -217,9 +240,17 @@ button { cursor: pointer; }
     color: var(--text);
 }
 
+.gs-session-item:hover .gs-session-icon {
+    opacity: 0.9;
+}
+
 .gs-session-item.active {
     background: var(--accent-dim);
     color: var(--accent);
+}
+
+.gs-session-item.active .gs-session-icon {
+    opacity: 1;
 }
 
 .gs-empty {
@@ -571,6 +602,7 @@ button { cursor: pointer; }
     background: var(--surface);
     color: var(--text);
 }
+
 /* Thinking indicator */
 .thinking-dots {
     display: flex;
@@ -1513,16 +1545,62 @@ button { cursor: pointer; }
     }
 }
 
+/* Mobile menu toggle + backdrop (hidden on desktop) */
+.mobile-menu-toggle {
+    display: none;
+    position: fixed;
+    top: 14px;
+    left: 14px;
+    z-index: 300;
+    width: 38px;
+    height: 38px;
+    align-items: center;
+    justify-content: center;
+    border-radius: var(--radius-sm);
+    background: var(--surface);
+    border: 1px solid var(--border);
+    color: var(--text);
+}
+
+.mobile-menu-toggle:hover {
+    background: var(--surface-hover);
+}
+
+.sidebar-backdrop {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 190;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+}
+
+.sidebar-backdrop.visible {
+    display: block;
+    opacity: 1;
+}
+
 @media (max-width: 640px) {
+    .mobile-menu-toggle {
+        display: flex;
+    }
+
     .global-sidebar {
-        display: none; /* collapsed on mobile — future: add toggle */
+        transform: translateX(-100%);
+        transition: transform 0.25s ease;
+        z-index: 210;
+    }
+
+    .global-sidebar.mobile-open {
+        transform: translateX(0);
     }
 
     .app-main {
         left: 0;
     }
 
-    .chat-header { padding: 0 16px; }
+    .chat-header { padding: 0 16px 0 60px; }
     .chat-messages { padding: 20px 14px 180px; }
     .chat-input-area { padding: 12px 12px 16px; }
 
@@ -1531,6 +1609,8 @@ button { cursor: pointer; }
 
     .input-hint { display: none; }
     .active-document { display: none; }
+
+    .docs-page { padding-top: 60px; }
 
     .home-features { grid-template-columns: 1fr; }
 }
